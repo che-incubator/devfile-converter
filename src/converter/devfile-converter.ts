@@ -618,7 +618,12 @@ export class DevfileConverter {
       devfileV2.attributes[this.VSCODE_LAUNCH_JSON] = launchCommand.actions[0].referenceContent;
     }
 
-    return devfileV2;
+    let content = JSON.stringify(devfileV2);
+
+    // update devfile v1 constants
+    content = content.replace(/\$\(CHE_PROJECTS_ROOT\)/g, '$(PROJECTS_ROOT)');
+    content = content.replace(/\$\{CHE_PROJECTS_ROOT\}/g, '${PROJECTS_ROOT}');
+    return JSON.parse(content);
   }
 
   async processPluginsAndEditorsFromDevfileV2(
@@ -827,6 +832,11 @@ export class DevfileConverter {
       delete devfileV1Any.commands;
     }
 
-    return devfileV1;
+    let content = JSON.stringify(devfileV1, undefined, 2);
+
+    // update devfile v2 constants
+    content = content.replace(/\$\(PROJECTS_ROOT\)/g, '$(CHE_PROJECTS_ROOT)');
+    content = content.replace(/\$\{PROJECTS_ROOT\}/g, '${CHE_PROJECTS_ROOT}');
+    return JSON.parse(content);
   }
 }

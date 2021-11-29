@@ -230,6 +230,13 @@ describe('Test Devfile converter', () => {
         },
       ],
     });
+
+    // check that the variable is correct
+    const runCommand = convertedDevfileV1.commands.find(command => command.name === 'run-with-mysql');
+    expect(runCommand).toBeDefined();
+    // check PROJECTS_ROOT is renamed to CHE_PROJECTS_ROOT
+    expect(runCommand.actions[0].workdir).toStrictEqual('${CHE_PROJECTS_ROOT}/java-spring-petclinic');
+
     // check mountSources is there when not specified as default is not the same
     const toolsComponent = convertedDevfileV1.components.find(
       component => component.type === 'dockerimage' && component.alias === 'tools'
