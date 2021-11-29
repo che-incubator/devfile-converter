@@ -1,0 +1,112 @@
+schemaVersion: 2.1.0
+metadata:
+  name: spring-petclinic
+attributes:
+  che-theia.eclipse.org/sidecar-policy: USE_DEV_CONTAINER
+projects:
+      - name: web-nodejs-sample
+        git:
+          checkoutFrom:
+            remote: 'origin'
+            revision: 'devfilev2'
+          remotes:
+            origin: "https://github.com/che-samples/java-spring-petclinic"
+components:
+  - name: tools
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-d433ed6
+      memoryLimit: 3Gi
+      endpoints:
+        - exposure: internal
+          name: mysql
+          protocol: tcp
+          targetPort: 3306
+        - exposure: none
+          name: debug
+          protocol: tcp
+          targetPort: 5005
+        - exposure: public
+          name: 8080-tcp
+          protocol: http
+          targetPort: 8080
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+
+  - name: m2
+    volume:
+      size: 1G
+  
+  - name: mysql
+    container:
+      image: quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764
+      memoryLimit: 300Mi
+      endpoints:
+        - exposure: none
+          name: db
+          protocol: tcp
+          targetPort: 3306
+      env:
+        - name: MYSQL_USER
+          value: petclinic
+        - name: MYSQL_PASSWORD
+          value: petclinic
+        - name: MYSQL_DATABASE
+          value: petclinic
+        - name: PS1
+          value: $(echo ${0})\\$
+
+commands:
+  - id: prepare-database
+    exec:
+      component: mysql
+      workingDir: ${PROJECTS_ROOT}/java-spring-petclinic
+      commandLine: |
+        /opt/rh/rh-mysql57/root/usr/bin/mysql -u root < ${PROJECTS_ROOT}/java-spring-petclinic/src/main/resources/db/mysql/user.sql && \
+        /opt/rh/rh-mysql57/root/usr/bin/mysql -u root petclinic < ${PROJECTS_ROOT}/java-spring-petclinic/src/main/resources/db/mysql/schema.sql && \
+        /opt/rh/rh-mysql57/root/usr/bin/mysql -u root petclinic < ${PROJECTS_ROOT}/java-spring-petclinic/src/main/resources/db/mysql/data.sql && \
+        echo -e "\e[32mDone.\e[0m Database petclinic was configured"
+      group:
+        kind: run
+        isDefault: true
+
+  - id: build
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/java-spring-petclinic
+      commandLine: mvn clean install
+      group:
+        kind: build
+        isDefault: true
+
+  - id: run-with-hsqldb
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/java-spring-petclinic
+      commandLine: >-
+        java -jar target/*.jar
+      group:
+        kind: run
+        isDefault: true
+
+  - id: run-with-mysql
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/java-spring-petclinic
+      commandLine: |
+        java -jar -Dspring-boot.run.profiles=mysql \
+        -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 \
+        target/*.jar
+      group:
+        kind: run
+        isDefault: true
+
+  - id: run-debug
+    exec:
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/java-spring-petclinic
+      commandLine: >-
+        java -jar -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 target/*.jar
+      group:
+        kind: run
+        isDefault: true

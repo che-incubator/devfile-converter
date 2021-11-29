@@ -1,0 +1,73 @@
+metadata:
+  name: rewine-backend
+projects:
+  - name: rewine-backend
+    source:
+      location: 'https://github.com/foo/backend.git'
+      type: git
+      branch: master
+components:
+  - mountSources: true
+    endpoints:
+      - name: quarkus-development-server
+        port: 8080
+        attributes:
+          public: true
+          type: ide
+    memoryLimit: 512Mi
+    cpuLimit: 500m
+    memoryRequest: 64Mi
+    cpuRequest: 50m
+    type: dockerimage
+    args: 
+      - abcd
+    volumes:
+      - name: m2
+        containerPath: /home/jboss/.m2
+    alias: maven
+    image: >-
+      registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:38e363ba28941e6ef688d511c388324d0f83f7a1fac3eb65e09aa50858f0ae84
+    env:
+      - value: >-
+          -XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+          -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4
+          -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true
+          -Xms20m -Djava.security.egd=file:/dev/./urandom
+          -Duser.home=/home/jboss
+        name: JAVA_OPTS
+      - value: $(JAVA_OPTS)
+        name: MAVEN_OPTS
+  - id: redhat/vscode-openshift-connector/latest
+    type: chePlugin
+    registryUrl: http://dummy-registry.url
+    memoryLimit: 512Mi
+    cpuLimit: 500m
+    memoryRequest: 64Mi
+    cpuRequest: 50m
+    env:
+      - name: hello
+        value: bar
+  - id: redhat/quarkus-java11/latest
+    type: chePlugin    
+    preferences:
+      -foo: bar    
+  - reference: http://my-plugin.reference
+    type: chePlugin
+apiVersion: 1.0.0
+commands:
+  - name: Attach to Remote Quarkus App
+    actions:
+      - referenceContent: |
+          {
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "type": "java",
+                "request": "attach",
+                "name": "Attach to Remote Quarkus App",
+                "hostName": "localhost",
+                "port": 5005
+              }
+            ]
+          }
+        type: vscode-launch
