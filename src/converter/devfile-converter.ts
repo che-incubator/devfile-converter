@@ -187,6 +187,10 @@ export class DevfileConverter {
 
       if (componentV2.container.mountSources) {
         devfileV1Component.mountSources = componentV2.container.mountSources;
+      } else {
+        // if not specified, mountSources needs to be added back on the container
+        // as the default is not the same
+        devfileV1Component.mountSources = true;
       }
       if (componentV2.container.args) {
         devfileV1Component.args = componentV2.container.args;

@@ -230,6 +230,18 @@ describe('Test Devfile converter', () => {
         },
       ],
     });
+    // check mountSources is there when not specified as default is not the same
+    const toolsComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.alias === 'tools'
+    );
+    expect(toolsComponent).toBeDefined();
+    expect(toolsComponent.mountSources).toBeTruthy();
+
+    const mysqlComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.alias === 'mysql'
+    );
+    expect(mysqlComponent).toBeDefined();
+    expect(mysqlComponent.mountSources).toBeTruthy();
   });
 
   test('convert v2 -> v1 devfile-petclinc-devfile-empty-v2.yaml', async () => {
