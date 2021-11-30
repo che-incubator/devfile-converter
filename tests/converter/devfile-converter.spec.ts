@@ -19,15 +19,22 @@ import * as path from 'path';
 import { DevfileConverter } from '../../src/converter/devfile-converter';
 import { Container } from 'inversify';
 import { che } from '@eclipse-che/api';
+import { Validator } from 'jsonschema';
 
 describe('Test Devfile converter', () => {
   let devfileConverter: DevfileConverter;
 
+  let schema;
+
   beforeEach(async () => {
     jest.restoreAllMocks();
     jest.resetAllMocks();
-    const container = new Container();
 
+    const schemaPath = path.resolve(__dirname, '..', '_data', 'devfile-1.0-schema.json');
+    const schemaContent = await fs.readFile(schemaPath, 'utf-8');
+    schema = JSON.parse(schemaContent);
+
+    const container = new Container();
     container.bind(DevfileConverter).toSelf().inSingletonScope();
     devfileConverter = container.get(DevfileConverter);
   });
@@ -249,6 +256,10 @@ describe('Test Devfile converter', () => {
     );
     expect(mysqlComponent).toBeDefined();
     expect(mysqlComponent.mountSources).toBeTruthy();
+
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
   });
 
   test('convert v2 -> v1 devfile-petclinc-devfile-empty-v2.yaml', async () => {
@@ -263,5 +274,19 @@ describe('Test Devfile converter', () => {
         generateName: 'empty',
       },
     });
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
+  });
+
+  test('convert v2 -> v1 devfile-v2-from-dashboard.yaml has a valid schema', async () => {
+    const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-v2-from-dashboard.yaml');
+    const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');
+    const devfileV2 = jsYaml.load(devfileV2Content);
+    const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
+
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
   });
 });

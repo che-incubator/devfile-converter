@@ -832,6 +832,14 @@ export class DevfileConverter {
       delete devfileV1Any.commands;
     }
 
+    // cleanup attributes that are not string
+    if (devfileV1.attributes) {
+      Object.keys(devfileV1.attributes).forEach(key => {
+        if (typeof devfileV1.attributes[key] !== 'string') {
+          delete devfileV1.attributes[key];
+        }
+      });
+    }
     let content = JSON.stringify(devfileV1, undefined, 2);
 
     // update devfile v2 constants

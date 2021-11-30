@@ -445,6 +445,7 @@ __metadata:
     jest: ^27.3.1
     js-yaml: ^4.0.0
     jsonc-parser: ^3.0.0
+    jsonschema: ^1.4.0
     prettier: ^2.4.1
     reflect-metadata: ^0.1.13
     rimraf: ^3.0.2
@@ -3616,6 +3617,13 @@ __metadata:
     graceful-fs:
       optional: true
   checksum: 7af3b8e1ac8fe7f1eccc6263c6ca14e1966fcbc74b618d3c78a0a2075579487547b94f72b7a1114e844a1e15bb00d440e5d1720bfc4612d790a6f285d5ea8354
+  languageName: node
+  linkType: hard
+
+"jsonschema@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "jsonschema@npm:1.4.0"
+  checksum: a2f96b5154658f5567b064d6f25fa4cb7e38b923d5dce9dad8d2566a07dd94abc4acedf234333a91f31bc9934e9dd57c270dcc51e5656b4c104408196c768580
   languageName: node
   linkType: hard
 
