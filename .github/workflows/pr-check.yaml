@@ -13,7 +13,7 @@ name: pr-check
 on: [pull_request]
 
 jobs:
-  publish:
+  pr-check:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/setup-node@v1
