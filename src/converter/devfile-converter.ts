@@ -157,8 +157,12 @@ export class DevfileConverter {
 
   componentV2toComponentV1(componentV2: V220DevfileComponents): che.workspace.devfile.Component {
     if (componentV2.kubernetes) {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-      return JSON.parse(componentV2.kubernetes!.inlined!) as che.workspace.devfile.Component;
+      if (componentV2.kubernetes.inlined) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return JSON.parse(componentV2.kubernetes!.inlined!) as che.workspace.devfile.Component;
+      } else {
+        return undefined;
+      }
     } else if (componentV2.openshift) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       return JSON.parse(componentV2.openshift!.inlined!) as che.workspace.devfile.Component;
@@ -314,10 +318,12 @@ export class DevfileConverter {
       if (commandV2.exec.workingDir) {
         devfileAction.workdir = commandV2.exec.workingDir;
       }
+
       devfileAction.type = 'exec';
       devfileV1Command.actions = [devfileAction];
+      return devfileV1Command;
     }
-    return devfileV1Command;
+    return undefined;
   }
 
   projectV1toProjectV2(projectV1: che.workspace.devfile.Project): V220DevfileProjects {
@@ -787,6 +793,70 @@ export class DevfileConverter {
     }
   }
 
+  findFirstProjectPath(devfileV1: che.workspace.devfile.Devfile): string | undefined {
+    const projects = devfileV1.projects;
+    if (!projects || projects.length === 0) {
+      return undefined;
+    }
+
+    // take first project
+    const project = projects[0];
+    let path;
+    if (project.clonePath) {
+      path = `\${CHE_PROJECTS_ROOT}/${project.clonePath}`;
+    } else {
+      path = `\${CHE_PROJECTS_ROOT}/${project.name}`;
+    }
+    return path;
+  }
+
+  prunePlaceHolderComponents(devfileV1: che.workspace.devfile.Devfile) {
+    devfileV1.components = devfileV1.components.filter(
+      component => component.image !== 'buildguidanceimage-placeholder'
+    );
+  }
+
+  fixNightlyImages(devfileV1: che.workspace.devfile.Devfile) {
+    devfileV1.components.forEach(component => {
+      if (component.image && component.image === 'quay.io/eclipse/che-quarkus:nightly') {
+        component.image = 'quay.io/eclipse/che-quarkus:next';
+      } else if (component.image && component.image === 'quay.io/eclipse/che-java11-maven:nightly') {
+        component.image = 'quay.io/eclipse/che-java11-maven:next';
+      }
+    });
+  }
+
+  // Apply 1Gi on all components without memoryLimit
+  fixMemoryLimit(devfileV1: che.workspace.devfile.Devfile) {
+    devfileV1.components.forEach(component => {
+      if (component.type === 'dockerimage' && !component.memoryLimit) {
+        component.memoryLimit = '1Gi';
+      }
+    });
+  }
+
+  async processDefaultWorkDirCommands(devfileV1: che.workspace.devfile.Devfile, path: string): Promise<void> {
+    // grab commands without workdir or with workingdir being the parent
+    const execWithoutWorkingdir = devfileV1.commands
+      .filter(
+        command =>
+          command.actions &&
+          command.actions.find(
+            action =>
+              (!action.workdir || action.workdir === '$PROJECTS_ROOT' || action.workdir === '${PROJECTS_ROOT}') &&
+              action.type === 'exec'
+          )
+      )
+      .map(command => command.actions)
+      .flat();
+
+    // update working directory
+    if (execWithoutWorkingdir.length > 0 && path) {
+      // set the working directory to the project directory
+      execWithoutWorkingdir.forEach(exec => (exec.workdir = path));
+    }
+  }
+
   async devfileV2toDevfileV1(
     devfileV2: Devfile,
     externalContentAccess?: (filename: string) => Promise<string>
@@ -817,6 +887,20 @@ export class DevfileConverter {
     // process plugins and editors
     await this.processPluginsAndEditorsFromDevfileV2(devfileV2, devfileV1, externalContentAccess);
 
+    const firstProjectPath = this.findFirstProjectPath(devfileV1);
+
+    // update workDir of commands to be inside the current project if missing
+    await this.processDefaultWorkDirCommands(devfileV1, firstProjectPath);
+
+    // prune placeholder components
+    this.prunePlaceHolderComponents(devfileV1);
+
+    // fix nightly images of che
+    this.fixNightlyImages(devfileV1);
+
+    // memoryLimit is a mandatory attribute in devfile v1
+    this.fixMemoryLimit(devfileV1);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const devfileV1Any = devfileV1 as any;
 
@@ -840,11 +924,19 @@ export class DevfileConverter {
         }
       });
     }
+
+    if (devfileV1.attributes && Object.keys(devfileV1.attributes).length === 0) {
+      delete devfileV1Any.attributes;
+    }
+
     let content = JSON.stringify(devfileV1, undefined, 2);
 
     // update devfile v2 constants
     content = content.replace(/\$\(PROJECTS_ROOT\)/g, '$(CHE_PROJECTS_ROOT)');
     content = content.replace(/\$\{PROJECTS_ROOT\}/g, '${CHE_PROJECTS_ROOT}');
+    if (firstProjectPath) {
+      content = content.replace(/\$\{PROJECT_SOURCE\}/g, firstProjectPath);
+    }
     return JSON.parse(content);
   }
 }

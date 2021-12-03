@@ -57,6 +57,7 @@ commands:
   - type: exec
     component: go-cli
     command: kill $(pidof go)
+    workdir: ${CHE_PROJECTS_ROOT}/src/github.com/che-samples/example/outyet
 -
   name: '1.3 Test outyet'
   actions:
