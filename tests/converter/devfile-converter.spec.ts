@@ -289,4 +289,100 @@ describe('Test Devfile converter', () => {
     const validationResult = v.validate(convertedDevfileV1, schema);
     expect(validationResult.valid).toBeTruthy();
   });
+
+  test('convert v2.2 -> v1 devfile-samples-java-springboot-basic-v2_2.yaml', async () => {
+    const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-samples-java-springboot-basic-v2_2.yaml');
+    const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');
+    const devfileV2 = jsYaml.load(devfileV2Content);
+    const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
+
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
+
+    // expect we have tools component
+    const toolsComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.alias === 'tools'
+    );
+    expect(toolsComponent).toBeDefined();
+    expect(toolsComponent.mountSources).toBeTruthy();
+
+    // expect we have only 3 commands, the exec commands
+    expect(convertedDevfileV1.commands.length).toBe(3);
+
+    // working directory should be set
+    const buildCommand = convertedDevfileV1.commands.find(command => command.name === 'build');
+    expect(buildCommand).toBeDefined();
+    expect(buildCommand?.actions[0]?.workdir).toBe('${CHE_PROJECTS_ROOT}/devfile-sample-java-springboot-basic');
+  });
+
+  test('convert v2.2 -> v1 devfile-samples-java-quarkus-v2_2-old.yaml', async () => {
+    const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-samples-java-quarkus-v2_2-old.yaml');
+    const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');
+    const devfileV2 = jsYaml.load(devfileV2Content);
+    const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
+
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
+
+    // expect we have tools component
+    const toolsComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.alias === 'tools'
+    );
+    expect(toolsComponent).toBeDefined();
+    expect(toolsComponent.mountSources).toBeTruthy();
+
+    // expect we have only 3 commands, the exec commands
+    expect(convertedDevfileV1.commands.length).toBe(3);
+
+    // working directory should be set
+    const initCompileCommand = convertedDevfileV1.commands.find(command => command.name === 'init-compile');
+    expect(initCompileCommand).toBeDefined();
+    expect(initCompileCommand?.actions[0]?.workdir).toBe('${CHE_PROJECTS_ROOT}/devfile-sample-code-with-quarkus');
+
+    // check placeHolder component is not there anymore
+    const placeHolderComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.image === 'buildguidanceimage-placeholder'
+    );
+    expect(placeHolderComponent).toBeUndefined();
+
+    // check the che nightly images have been replaced by next component
+    expect(toolsComponent.image).toBe('quay.io/eclipse/che-quarkus:next');
+  });
+
+  test('convert v2.2 -> v1 devfile-samples-python_2_2.yaml', async () => {
+    const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-samples-python_2_2.yaml');
+    const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');
+    const devfileV2 = jsYaml.load(devfileV2Content);
+    const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
+
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV1, schema);
+    expect(validationResult.valid).toBeTruthy();
+
+    // expect we have py-web component
+    const pyWebComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.alias === 'py-web'
+    );
+    expect(pyWebComponent).toBeDefined();
+    expect(pyWebComponent.mountSources).toBeTruthy();
+
+    // expect we have only 3 commands, the exec commands
+    expect(convertedDevfileV1.commands.length).toBe(3);
+
+    // working directory should be set
+    const runAppCommand = convertedDevfileV1.commands.find(command => command.name === 'run-app');
+    expect(runAppCommand).toBeDefined();
+    expect(runAppCommand?.actions[0]?.workdir).toBe('${CHE_PROJECTS_ROOT}/devfile-sample-python-basic');
+
+    // check placeHolder component is not there anymore
+    const placeHolderComponent = convertedDevfileV1.components.find(
+      component => component.type === 'dockerimage' && component.image === 'buildguidanceimage-placeholder'
+    );
+    expect(placeHolderComponent).toBeUndefined();
+
+    // check the che nightly image is there for this one
+    expect(pyWebComponent.image).toBe('quay.io/eclipse/che-python-3.7:nightly');
+  });
 });
