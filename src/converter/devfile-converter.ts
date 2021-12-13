@@ -698,7 +698,7 @@ export class DevfileConverter {
       // for each plugin, add a component
       vsCodeExtensionJson.recommendations.forEach(recommendation => {
         devfileV1.components.push({
-          id: `${recommendation.replaceAll('.', '/')}/latest`,
+          id: `${recommendation.replace(/\./g, '/')}/latest`,
           type: 'chePlugin',
         });
       });
