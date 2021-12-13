@@ -24,15 +24,22 @@ import { Validator } from 'jsonschema';
 describe('Test Devfile converter', () => {
   let devfileConverter: DevfileConverter;
 
-  let schema;
+  let schemaV1;
+  let schemaV2_1_0;
+
+  beforeAll(async () => {
+    const schemaV1Path = path.resolve(__dirname, '..', '_data', 'devfile-1.0-schema.json');
+    const schemaV1Content = await fs.readFile(schemaV1Path, 'utf-8');
+    schemaV1 = JSON.parse(schemaV1Content);
+
+    const schemaV2Path = path.resolve(__dirname, '..', '_data', 'devfile-2-1-0-schema.json');
+    const schemaV2Content = await fs.readFile(schemaV2Path, 'utf-8');
+    schemaV2_1_0 = JSON.parse(schemaV2Content);
+  });
 
   beforeEach(async () => {
     jest.restoreAllMocks();
     jest.resetAllMocks();
-
-    const schemaPath = path.resolve(__dirname, '..', '_data', 'devfile-1.0-schema.json');
-    const schemaContent = await fs.readFile(schemaPath, 'utf-8');
-    schema = JSON.parse(schemaContent);
 
     const container = new Container();
     container.bind(DevfileConverter).toSelf().inSingletonScope();
@@ -180,6 +187,26 @@ describe('Test Devfile converter', () => {
     expect(convertedDevfileV1).toEqual(devfileV1);
   });
 
+  test('convert v1 -> v2 devfile-eclipse-che-server-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-eclipse-che-server-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_1_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check command id no longer has space
+    const buildCommand = convertedDevfileV2.commands.find(
+      command => command.exec && command.exec.commandLine === 'mvn clean install -DskipTests'
+    );
+    expect(buildCommand).toBeDefined();
+    expect(buildCommand.id).toEqual('build-without-tests');
+    // check label is there
+    expect(buildCommand.exec.label).toEqual('build without tests');
+  });
+
   test('convert v2 -> v1 devfile-petclinc-devfilev2.yaml', async () => {
     const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-petclinc-devfilev2.yaml');
     const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');
@@ -258,7 +285,7 @@ describe('Test Devfile converter', () => {
     expect(mysqlComponent.mountSources).toBeTruthy();
 
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
   });
 
@@ -275,7 +302,7 @@ describe('Test Devfile converter', () => {
       },
     });
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
   });
 
@@ -286,7 +313,7 @@ describe('Test Devfile converter', () => {
     const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
 
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
   });
 
@@ -297,7 +324,7 @@ describe('Test Devfile converter', () => {
     const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
 
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
 
     // expect we have tools component
@@ -323,7 +350,7 @@ describe('Test Devfile converter', () => {
     const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
 
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
 
     // expect we have tools component
@@ -358,7 +385,7 @@ describe('Test Devfile converter', () => {
     const convertedDevfileV1 = await devfileConverter.devfileV2toDevfileV1(devfileV2);
 
     var v = new Validator();
-    const validationResult = v.validate(convertedDevfileV1, schema);
+    const validationResult = v.validate(convertedDevfileV1, schemaV1);
     expect(validationResult.valid).toBeTruthy();
 
     // expect we have py-web component
