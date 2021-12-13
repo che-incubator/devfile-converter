@@ -280,11 +280,17 @@ export class DevfileConverter {
     const devfileV2Command: any = {};
 
     if (commandV1.name) {
-      devfileV2Command.id = commandV1.name;
+      // the id can't have spaces
+      devfileV2Command.id = commandV1.name.replace(/\s+/g, '-').toLowerCase();
     }
     if (commandV1.actions && commandV1.actions[0].type === 'exec') {
       devfileV2Command.exec = {};
       const action = commandV1.actions[0];
+      // label is the same as name
+      if (commandV1.name) {
+        devfileV2Command.exec.label = commandV1.name;
+      }
+
       if (action.command) {
         devfileV2Command.exec.commandLine = action.command;
       }
@@ -308,6 +314,10 @@ export class DevfileConverter {
     }
 
     if (commandV2.exec) {
+      if (commandV2.exec.label) {
+        devfileV1Command.name = commandV2.exec.label;
+      }
+
       const devfileAction: che.workspace.devfile.DevfileAction = {};
       if (commandV2.exec.commandLine) {
         devfileAction.command = commandV2.exec.commandLine;
