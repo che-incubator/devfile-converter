@@ -626,7 +626,7 @@ export class DevfileConverter {
       devfileV2.attributes[this.VSCODE_EXTENSIONS_JSON] = inlineVsCodeExtensionJson;
     }
 
-    // convertr editor component to inline che-editor.yaml content
+    // convert editor component to inline che-editor.yaml content
     const inlineCheEditorYaml = this.inlineCheEditorYamlFromComponentsV1(devfileV1.components);
     if (inlineCheEditorYaml) {
       devfileV2.attributes[this.CHE_EDITOR_YAML] = inlineCheEditorYaml;
@@ -645,12 +645,45 @@ export class DevfileConverter {
       devfileV2.attributes[this.VSCODE_LAUNCH_JSON] = launchCommand.actions[0].referenceContent;
     }
 
+    // process plugins and editors
+    await this.processVolumesFromDevfileV2(devfileV2);
+
     let content = JSON.stringify(devfileV2);
 
     // update devfile v1 constants
     content = content.replace(/\$\(CHE_PROJECTS_ROOT\)/g, '$(PROJECTS_ROOT)');
     content = content.replace(/\$\{CHE_PROJECTS_ROOT\}/g, '${PROJECTS_ROOT}');
     return JSON.parse(content);
+  }
+
+  // add missing volumes components when a volumeMount is defined in the devfile
+  async processVolumesFromDevfileV2(devfileV2: Devfile): Promise<void> {
+    // devfile has no undefined components, can be empty
+
+    // grab all container mountedVolumes
+    const mountedVolumes = devfileV2.components
+      .map(component => component.container)
+      .filter(container => container)
+      .map(container => container.volumeMounts)
+      .reduce((acc, volumeMounts) => acc.concat(volumeMounts), [])
+      .filter(volume => volume);
+    const mountedVolumeNames = mountedVolumes.map(volume => volume.name);
+
+    // grab all components that are volumes
+    const allComponentVolumeNames = devfileV2.components
+      .filter(component => component.volume)
+      .map(component => component.name);
+
+    // check the mounted volumes that are not in existing components
+    const missingVolumes = mountedVolumeNames.filter(volumeName => !allComponentVolumeNames.includes(volumeName));
+
+    // add missing volumes
+    missingVolumes.forEach(volumeName => {
+      devfileV2.components.push({
+        name: volumeName,
+        volume: {},
+      });
+    });
   }
 
   async processPluginsAndEditorsFromDevfileV2(
