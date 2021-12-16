@@ -26,15 +26,20 @@ describe('Test Devfile converter', () => {
 
   let schemaV1;
   let schemaV2_1_0;
+  let schemaV2_2_0;
 
   beforeAll(async () => {
     const schemaV1Path = path.resolve(__dirname, '..', '_data', 'devfile-1.0-schema.json');
     const schemaV1Content = await fs.readFile(schemaV1Path, 'utf-8');
     schemaV1 = JSON.parse(schemaV1Content);
 
-    const schemaV2Path = path.resolve(__dirname, '..', '_data', 'devfile-2-1-0-schema.json');
-    const schemaV2Content = await fs.readFile(schemaV2Path, 'utf-8');
-    schemaV2_1_0 = JSON.parse(schemaV2Content);
+    const schemaV2_1_0_Path = path.resolve(__dirname, '..', '_data', 'devfile-2-1-0-schema.json');
+    const schemaV2_1_0_Content = await fs.readFile(schemaV2_1_0_Path, 'utf-8');
+    schemaV2_1_0 = JSON.parse(schemaV2_1_0_Content);
+
+    const schemaV2_2_0_Path = path.resolve(__dirname, '..', '_data', 'devfile-2-2-0-schema.json');
+    const schemaV2_2_0_Content = await fs.readFile(schemaV2_2_0_Path, 'utf-8');
+    schemaV2_2_0 = JSON.parse(schemaV2_2_0_Content);
   });
 
   beforeEach(async () => {
@@ -205,6 +210,30 @@ describe('Test Devfile converter', () => {
     expect(buildCommand.id).toEqual('build-without-tests');
     // check label is there
     expect(buildCommand.exec.label).toEqual('build without tests');
+  });
+
+  test('convert v1 -> v2 devfile-eclipse-che-dashboard-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-eclipse-che-dashboard-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check command id no longer has space
+    const buildCommand = convertedDevfileV2.commands.find(
+      command => command.exec && command.exec.commandLine === 'yarn install && yarn compile'
+    );
+    expect(buildCommand).toBeDefined();
+    // check brackets are removed and spaces are replaced with '-'
+    expect(buildCommand.id).toEqual('ud-compile');
+    // check original label is still there
+    expect(buildCommand.exec.label).toEqual('[UD] compile');
+
+    // check metata.name has no trailing -
+    expect(convertedDevfileV2.metadata.name).toEqual('che-dashboard-react');
   });
 
   test('convert v2 -> v1 devfile-petclinc-devfilev2.yaml', async () => {

@@ -281,7 +281,11 @@ export class DevfileConverter {
 
     if (commandV1.name) {
       // the id can't have spaces
-      devfileV2Command.id = commandV1.name.replace(/\s+/g, '-').toLowerCase();
+      // replace space by dash and then remove all special characters
+      devfileV2Command.id = commandV1.name
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z-]/g, '')
+        .toLowerCase();
     }
     if (commandV1.actions && commandV1.actions[0].type === 'exec') {
       devfileV2Command.exec = {};
@@ -421,6 +425,11 @@ export class DevfileConverter {
           devfileMetadataV2.attributes = {};
         }
         devfileMetadataV2.attributes['metadata-name-field'] = 'generateName';
+        devfileMetadataV2.attributes['metadata-name-original-value'] = metadataV1.generateName;
+        // remove the trailing - to make it compliant with kubernetes name
+        if (devfileMetadataV2.name.endsWith('-')) {
+          devfileMetadataV2.name = devfileMetadataV2.name.slice(0, -1);
+        }
       }
       if (metadataV1.name) {
         devfileMetadataV2.name = metadataV1.name;
@@ -439,8 +448,9 @@ export class DevfileConverter {
       if (metadataV2.name) {
         const metaDataAttributes = metadataV2.attributes || {};
         const nameField = metaDataAttributes['metadata-name-field'];
-        if (nameField === 'generateName') {
-          devfileMetadataV1.generateName = metadataV2.name;
+        const originalValue = metaDataAttributes['metadata-name-original-value'];
+        if (nameField === 'generateName' && originalValue) {
+          devfileMetadataV1.generateName = originalValue;
         } else if (nameField === 'name') {
           devfileMetadataV1.name = metadataV2.name;
         } else {
@@ -448,6 +458,7 @@ export class DevfileConverter {
         }
         if (metadataV2.attributes) {
           delete metadataV2.attributes['metadata-name-field'];
+          delete metadataV2.attributes['metadata-name-original-value'];
         }
       }
     }
@@ -593,7 +604,7 @@ export class DevfileConverter {
 
   async devfileV1toDevfileV2(devfileV1: che.workspace.devfile.Devfile): Promise<Devfile> {
     const devfileV2: Devfile = {
-      schemaVersion: '2.0.0',
+      schemaVersion: '2.1.0',
       metadata: this.metadataV1toMetadataV2(devfileV1.metadata),
       projects: (devfileV1.projects || []).map(project => this.projectV1toProjectV2(project)),
       components: (devfileV1.components || [])
