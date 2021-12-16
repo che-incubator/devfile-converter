@@ -20,6 +20,7 @@ import { DevfileConverter } from '../../src/converter/devfile-converter';
 import { Container } from 'inversify';
 import { che } from '@eclipse-che/api';
 import { Validator } from 'jsonschema';
+import { Devfile } from '../../src/api/devfile';
 
 describe('Test Devfile converter', () => {
   let devfileConverter: DevfileConverter;
@@ -210,6 +211,10 @@ describe('Test Devfile converter', () => {
     expect(buildCommand.id).toEqual('build-without-tests');
     // check label is there
     expect(buildCommand.exec.label).toEqual('build without tests');
+
+    // check we have a volume component for the m2 volume
+    const m2Volume = convertedDevfileV2.components.find(component => component.name === 'm2' && component.volume);
+    expect(m2Volume).toBeDefined();
   });
 
   test('convert v1 -> v2 devfile-eclipse-che-dashboard-v1.yaml', async () => {
@@ -440,5 +445,48 @@ describe('Test Devfile converter', () => {
 
     // check the che nightly image is there for this one
     expect(pyWebComponent.image).toBe('quay.io/eclipse/che-python-3.7:nightly');
+  });
+
+  test('processVolumesFromDevfileV2', async () => {
+    const devfileV2: Devfile = {
+      schemaVersion: '2.1.0',
+      metadata: {
+        name: 'test-devfile',
+      },
+      components: [
+        {
+          name: 'volume',
+          volume: {},
+        },
+        {
+          name: 'tool',
+          container: {
+            image: 'tool',
+            volumeMounts: [
+              {
+                name: 'volume',
+                path: '/volume',
+              },
+              {
+                name: 'm2',
+                path: '/path/maven',
+              },
+            ],
+          },
+        },
+      ],
+    };
+    await devfileConverter.processVolumesFromDevfileV2(devfileV2);
+
+    var v = new Validator();
+    const validationResult = v.validate(devfileV2, schemaV2_1_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // expect one new component for the volume mounts
+    expect(devfileV2.components.length).toBe(3);
+
+    const m2Volume = devfileV2.components.find(component => component.name === 'm2');
+    expect(m2Volume).toBeDefined();
+    expect(m2Volume.volume).toBeDefined();
   });
 });
