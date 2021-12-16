@@ -28,7 +28,7 @@ describe('Test converter', () => {
       components: [],
       metadata: {},
       projects: [],
-      schemaVersion: '2.0.0',
+      schemaVersion: '2.1.0',
     });
   });
 
