@@ -19,7 +19,7 @@ components:
     memoryRequest: 64Mi
     cpuRequest: 50m
     type: dockerimage
-    args: 
+    args:
       - abcd
     volumes:
       - name: m2
@@ -48,9 +48,9 @@ components:
       - name: hello
         value: bar
   - id: redhat/quarkus-java11/latest
-    type: chePlugin    
+    type: chePlugin
     preferences:
-      -foo: bar    
+      -foo: bar
   - reference: http://my-plugin.reference
     type: chePlugin
 apiVersion: 1.0.0

@@ -29,6 +29,8 @@ export class DevfileConverter {
         const volume: any = {};
         if (volumeV1.name) {
           volume.name = volumeV1.name;
+          // volume names should not use _
+          volume.name = volume.name.replace(/_/g, '-');
         }
         if (volumeV1.containerPath) {
           volume.path = volumeV1.containerPath;
@@ -286,6 +288,13 @@ export class DevfileConverter {
         .replace(/\s+/g, '-')
         .replace(/[^a-zA-Z-]/g, '')
         .toLowerCase();
+
+      // needs to be max 63 characters
+      if (devfileV2Command.id.length > 63) {
+        devfileV2Command.id = devfileV2Command.id.substring(0, 63);
+      }
+      // trim '-' character from start or end
+      devfileV2Command.id = devfileV2Command.id.replace(/^\-+|\-+$/g, '');
     }
     if (commandV1.actions && commandV1.actions[0].type === 'exec') {
       devfileV2Command.exec = {};

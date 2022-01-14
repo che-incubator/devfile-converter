@@ -4,13 +4,13 @@ metadata:
 attributes:
   che-theia.eclipse.org/sidecar-policy: USE_DEV_CONTAINER
 projects:
-      - name: web-nodejs-sample
-        git:
-          checkoutFrom:
-            remote: 'origin'
-            revision: 'devfilev2'
-          remotes:
-            origin: "https://github.com/che-samples/java-spring-petclinic"
+  - name: web-nodejs-sample
+    git:
+      checkoutFrom:
+        remote: 'origin'
+        revision: 'devfilev2'
+      remotes:
+        origin: 'https://github.com/che-samples/java-spring-petclinic'
 components:
   - name: tools
     container:
@@ -36,7 +36,7 @@ components:
   - name: m2
     volume:
       size: 1G
-  
+
   - name: mysql
     container:
       image: quay.io/eclipse/che--centos--mysql-57-centos7:latest-e08ee4d43b7356607685b69bde6335e27cf20c020f345b6c6c59400183882764

@@ -15,7 +15,7 @@ projects:
   - name: devfile-sample-python-basic
     git:
       remotes:
-        origin: "https://github.com/devfile-samples/devfile-sample-python-basic"
+        origin: 'https://github.com/devfile-samples/devfile-sample-python-basic'
 components:
   - name: outerloop-build
     image:
@@ -44,7 +44,7 @@ commands:
       component: py-web
   - id: run-app
     exec:
-      commandLine: "python app.py"
+      commandLine: 'python app.py'
       workingDir: ${PROJECTS_ROOT}
       component: py-web
       group:
@@ -52,7 +52,7 @@ commands:
         isDefault: true
   - id: debugpy
     exec:
-      commandLine: "pip install --user debugpy && python -m debugpy --listen 0.0.0.0:${DEBUG_PORT} app.py"
+      commandLine: 'pip install --user debugpy && python -m debugpy --listen 0.0.0.0:${DEBUG_PORT} app.py'
       workingDir: ${PROJECTS_ROOT}
       component: py-web
       group:

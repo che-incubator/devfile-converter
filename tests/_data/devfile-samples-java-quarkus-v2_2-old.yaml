@@ -8,14 +8,14 @@ metadata:
   website: https://quarkus.io
   displayName: Quarkus Java
   description: Upstream Quarkus with Java+GraalVM
-  tags: ["Java", "Quarkus"]
-  projectType: "quarkus"
-  language: "java"
+  tags: ['Java', 'Quarkus']
+  projectType: 'quarkus'
+  language: 'java'
 projects:
   - name: devfile-sample-code-with-quarkus
     git:
       remotes:
-        origin: "https://github.com/devfile-samples/devfile-sample-code-with-quarkus"
+        origin: 'https://github.com/devfile-samples/devfile-sample-code-with-quarkus'
 starterProjects:
   - name: community
     zip:
@@ -51,12 +51,12 @@ commands:
   - id: init-compile
     exec:
       component: tools
-      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository compile"
+      commandLine: 'mvn -Dmaven.repo.local=/home/user/.m2/repository compile'
       workingDir: $PROJECTS_ROOT
   - id: dev-run
     exec:
       component: tools
-      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+      commandLine: 'mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager'
       hotReloadCapable: true
       group:
         kind: run
@@ -65,7 +65,7 @@ commands:
   - id: dev-debug
     exec:
       component: tools
-      commandLine: "mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Ddebug=${DEBUG_PORT}"
+      commandLine: 'mvn -Dmaven.repo.local=/home/user/.m2/repository quarkus:dev -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Ddebug=${DEBUG_PORT}'
       hotReloadCapable: true
       group:
         kind: debug
