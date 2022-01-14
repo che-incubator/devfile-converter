@@ -16,5 +16,5 @@ components:
       app.kubernetes.io/component: webapp
     entrypoints:
       - containerName: spring-boot
-        command: ["tail"]
-        args: ["-f", "/dev/null"]
+        command: ['tail']
+        args: ['-f', '/dev/null']

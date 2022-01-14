@@ -241,6 +241,88 @@ describe('Test Devfile converter', () => {
     expect(convertedDevfileV2.metadata.name).toEqual('che-dashboard-react');
   });
 
+  test('convert v1 -> v2 devfile-php-laravel-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-php-laravel-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check command id no longer has space
+    const buildCommand = convertedDevfileV2.commands.find(
+      command => command.exec && command.exec.commandLine === 'cp .env.example .env'
+    );
+    expect(buildCommand).toBeDefined();
+    // check all wired characters are gone, and spaces are replaced with '-' and truncated to 63 char max
+    expect(buildCommand.id).toEqual('copy-the-example-env-file-and-make-the-required-configuration');
+    // check original label is still there
+    expect(buildCommand.exec.label).toEqual(
+      '2. Copy the example env file and make the required configuration changes in the .env file'
+    );
+
+    // check metata.name has no trailing -
+    expect(convertedDevfileV2.metadata.name).toEqual('php-laravel');
+  });
+
+  test('convert v1 -> v2 devfile-nodejs-yarn-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-nodejs-yarn-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check command id no longer has space
+    const buildCommand = convertedDevfileV2.commands.find(
+      command => command.exec && command.exec.commandLine === 'yarn set version berry'
+    );
+    expect(buildCommand).toBeDefined();
+    // check all wired characters are gone, and spaces are replaced with '-'
+    expect(buildCommand.id).toEqual('install-yarn');
+    // check original label is still there
+    expect(buildCommand.exec.label).toEqual('1. Install Yarn 2');
+
+    // check metata.name has no trailing -
+    expect(convertedDevfileV2.metadata.name).toEqual('nodejs-web-app');
+  });
+
+  test('convert v1 -> v2 devfile-java-mongo-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-java-mongo-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check command id no longer has space
+    const buildCommand = convertedDevfileV2.commands.find(
+      command =>
+        command.exec &&
+        command.exec.commandLine === 'mvn clean install' &&
+        command.exec.workingDir === '${PROJECTS_ROOT}/java-guestbook/frontend'
+    );
+    expect(buildCommand).toBeDefined();
+    // check all wired characters are gone, and spaces are replaced with '-'
+    expect(buildCommand.id).toEqual('maven-build-frontend');
+    // check original label is still there
+    expect(buildCommand.exec.label).toEqual('maven build frontend');
+
+    // check metata.name has no trailing -
+    expect(convertedDevfileV2.metadata.name).toEqual('java-mongo');
+
+    // check volume name does not have anymore _ characters
+    const mongoComponent = convertedDevfileV2.components.find(component => component.name === 'mongo');
+    expect(mongoComponent).toBeDefined();
+    expect(mongoComponent.container.volumeMounts[0].name).toEqual('mongodb-data');
+  });
+
   test('convert v2 -> v1 devfile-petclinc-devfilev2.yaml', async () => {
     const devfileV2YamlPath = path.resolve(__dirname, '..', '_data', 'devfile-petclinc-devfilev2.yaml');
     const devfileV2Content = await fs.readFile(devfileV2YamlPath, 'utf-8');

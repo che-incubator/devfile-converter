@@ -5,20 +5,17 @@ metadata:
 attributes:
   foo: bar
 projects:
-  -
-    name: example1
+  - name: example1
     source:
       type: git
-      location: "https://github.com/che-samples/java-spring-petclinic"
+      location: 'https://github.com/che-samples/java-spring-petclinic'
       commitId: 4953f87917b449a404a7f1f4e2457836b9eafbbc
-  -
-    name: example2
+  - name: example2
     source:
       type: git
-      location: "https://github.com/che-samples/java-spring-petclinic"
+      location: 'https://github.com/che-samples/java-spring-petclinic'
       tag: myTag
-  -
-    name: example3
+  - name: example3
     source:
       type: zip
-      location: "http://my-zip.file"
+      location: 'http://my-zip.file'
