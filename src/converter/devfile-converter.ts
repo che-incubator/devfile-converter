@@ -654,7 +654,8 @@ export class DevfileConverter {
       devfileV2.attributes[this.VSCODE_LAUNCH_JSON] = launchCommand.actions[0].referenceContent;
     }
 
-    // process plugins and editors
+    // process volumes
+    await this.fixInvalidVolumeName(devfileV2);
     await this.processVolumesFromDevfileV2(devfileV2);
 
     let content = JSON.stringify(devfileV2);
@@ -663,6 +664,35 @@ export class DevfileConverter {
     content = content.replace(/\$\(CHE_PROJECTS_ROOT\)/g, '$(PROJECTS_ROOT)');
     content = content.replace(/\$\{CHE_PROJECTS_ROOT\}/g, '${PROJECTS_ROOT}');
     return JSON.parse(content);
+  }
+
+  // if some volume component are also components, update the name of the volume component
+  // to be componentName-volume
+  async fixInvalidVolumeName(devfileV2: Devfile): Promise<void> {
+    // grab all container mountedVolumes
+    const mountedVolumes = devfileV2.components
+      .map(component => component.container)
+      .filter(container => container)
+      .map(container => container.volumeMounts)
+      .reduce((acc, volumeMounts) => acc.concat(volumeMounts), [])
+      .filter(volume => volume);
+    const mountedVolumeNames = mountedVolumes.map(volume => volume.name);
+
+    const allComponentExceptVolumeNames = devfileV2.components
+      .filter(component => !component.volume)
+      .map(component => component.name);
+
+    // check the volume components that are also a 'component'
+    const invalidVolumeNames = mountedVolumeNames.filter(componentName =>
+      allComponentExceptVolumeNames.includes(componentName)
+    );
+
+    // we have duplicates, need to update the volume name
+    mountedVolumes.forEach(volume => {
+      if (invalidVolumeNames.includes(volume.name)) {
+        volume.name = `${volume.name}-volume`;
+      }
+    });
   }
 
   // add missing volumes components when a volumeMount is defined in the devfile
