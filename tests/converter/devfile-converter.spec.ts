@@ -571,4 +571,28 @@ describe('Test Devfile converter', () => {
     expect(m2Volume).toBeDefined();
     expect(m2Volume.volume).toBeDefined();
   });
+
+  test('convert v1 -> v2 devfile-jkube-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-jkube-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // check metata.name has no trailing -
+    expect(convertedDevfileV2.metadata.name).toEqual('jkube');
+
+    // check that we don't have duplicates of volumes
+    const componentWithVolumes = convertedDevfileV2.components
+      .filter(component => component.volume)
+      .map(component => component.name);
+    const allUniques = !componentWithVolumes.some((v, i) => componentWithVolumes.indexOf(v) < i);
+    // check that we have only unique name for volumes
+    expect(allUniques).toBeTruthy();
+
+    expect(componentWithVolumes).toStrictEqual(['m2', 'www', 'kube']);
+  });
 });
