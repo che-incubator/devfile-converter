@@ -654,6 +654,9 @@ export class DevfileConverter {
       devfileV2.attributes[this.VSCODE_LAUNCH_JSON] = launchCommand.actions[0].referenceContent;
     }
 
+    // fix duplicated endpoints (same properties (name, port, etc..)
+    await this.fixDuplicatedEndpoints(devfileV2);
+
     // process volumes
     await this.fixInvalidVolumeName(devfileV2);
     await this.processVolumesFromDevfileV2(devfileV2);
@@ -664,6 +667,49 @@ export class DevfileConverter {
     content = content.replace(/\$\(CHE_PROJECTS_ROOT\)/g, '$(PROJECTS_ROOT)');
     content = content.replace(/\$\{CHE_PROJECTS_ROOT\}/g, '${PROJECTS_ROOT}');
     return JSON.parse(content);
+  }
+
+  // if some endpoints have excactly the same value, remove duplicates
+  async fixDuplicatedEndpoints(devfileV2: Devfile): Promise<void> {
+    // grab endpoints
+    const endpoints = devfileV2.components
+      .filter(component => component.container)
+      .map(component => component.container.endpoints)
+      .flat();
+
+    // remove duplicates
+    const uniqueEndpoints = endpoints.filter((value, index) => {
+      const _value = JSON.stringify(value);
+      return (
+        index ===
+        endpoints.findIndex(obj => {
+          return JSON.stringify(obj) === _value;
+        })
+      );
+    });
+    const uniqueEndpointsJson = uniqueEndpoints.map(endpoint => JSON.stringify(endpoint));
+    const alreadyProcessedEndpoints: string[] = [];
+
+    // ok now we'll iterate on endpoints and check if we need to replace endpoint if it's already been added
+    devfileV2.components
+      .filter(component => component.container)
+      .forEach(component => {
+        const endpoints = component.container.endpoints || [];
+
+        var i = endpoints.length;
+        while (i--) {
+          const jsonEndpoint = JSON.stringify(endpoints[i]);
+          if (uniqueEndpointsJson.includes(jsonEndpoint)) {
+            // first time we see, we keep
+            if (!alreadyProcessedEndpoints.includes(jsonEndpoint)) {
+              alreadyProcessedEndpoints.push(jsonEndpoint);
+            } else {
+              // need to remove this endpoint
+              endpoints.splice(i, 1);
+            }
+          }
+        }
+      });
   }
 
   // if some volume component are also components, update the name of the volume component
