@@ -684,8 +684,10 @@ export class DevfileConverter {
       .map(component => component.name);
 
     // check the mounted volumes that are not in existing components
-    const missingVolumes = mountedVolumeNames.filter(volumeName => !allComponentVolumeNames.includes(volumeName));
-
+    // use a set to avoid any duplicates
+    const missingVolumes = Array.from(
+      new Set(mountedVolumeNames.filter(volumeName => !allComponentVolumeNames.includes(volumeName)))
+    );
     // add missing volumes
     missingVolumes.forEach(volumeName => {
       devfileV2.components.push({
