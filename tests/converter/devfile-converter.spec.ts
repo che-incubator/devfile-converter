@@ -595,4 +595,19 @@ describe('Test Devfile converter', () => {
 
     expect(componentWithVolumes).toStrictEqual(['m2', 'www', 'kube']);
   });
+
+  test('convert v1 -> v2 devfile-gradle-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-gradle-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    const componentNames = convertedDevfileV2.components.map(component => component.name);
+    const allUniquesComponentNames = !componentNames.some((v, i) => componentNames.indexOf(v) < i);
+    // check that we have only unique name for components
+    expect(allUniquesComponentNames).toBeTruthy();
+  });
 });
