@@ -610,4 +610,34 @@ describe('Test Devfile converter', () => {
     // check that we have only unique name for components
     expect(allUniquesComponentNames).toBeTruthy();
   });
+
+  test('convert v1 -> v2 devfile-quarkus-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-quarkus-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    expect(validationResult.valid).toBeTruthy();
+
+    // grab all endpoints and ensure we don't have duplicate endpoints
+    const endpoints = convertedDevfileV2.components
+      .filter(component => component.container)
+      .map(component => component.container.endpoints)
+      .flat();
+
+    const uniqueArray = endpoints.filter((value, index) => {
+      const _value = JSON.stringify(value);
+      return (
+        index ===
+        endpoints.findIndex(obj => {
+          return JSON.stringify(obj) === _value;
+        })
+      );
+    });
+
+    // check that we have only unique endpoints
+    // we have a duplicate endpoint and it should be removed
+    expect(endpoints.length).toBe(uniqueArray.length);
+  });
 });
