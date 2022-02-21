@@ -640,4 +640,15 @@ describe('Test Devfile converter', () => {
     // we have a duplicate endpoint and it should be removed
     expect(endpoints.length).toBe(uniqueArray.length);
   });
+
+  test('convert v1 -> v2 devfile-rust-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-rust-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    // the project name is invalid and then it should have been fixed on the conversion
+    expect(validationResult.valid).toBeTruthy();
+  });
 });

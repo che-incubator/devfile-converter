@@ -350,9 +350,17 @@ export class DevfileConverter {
   }
 
   projectV1toProjectV2(projectV1: che.workspace.devfile.Project): V220DevfileProjects {
+    // the name can't have spaces
+    // replace space by dash and then remove all special characters
+    const projectName = projectV1.name
+      .replace(/\s+/g, '-')
+      // trim '-' character from start or end
+      .replace(/^\-+|\-+$/g, '')
+      .toLowerCase();
+
     const devfileV2Project: V220DevfileProjects = {
       attributes: {},
-      name: projectV1.name,
+      name: projectName,
     };
     if (projectV1.clonePath) {
       devfileV2Project.clonePath = projectV1.clonePath;
