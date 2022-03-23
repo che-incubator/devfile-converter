@@ -631,6 +631,16 @@ export class DevfileConverter {
     };
 
     devfileV2.attributes = {};
+
+    // handle the ephemeral attribute
+    if (
+      devfileV1.attributes &&
+      devfileV1.attributes.persistVolumes &&
+      devfileV1.attributes.persistVolumes === 'false'
+    ) {
+      devfileV2.attributes['controller.devfile.io/storage-type'] = 'ephemeral';
+    }
+
     // convert plugin components to inline che-theia-plugins.yaml content
     const inlineCheTheiaPluginsYaml = this.inlineCheTheiaPluginsYamlFromComponentsV1(devfileV1.components);
     if (inlineCheTheiaPluginsYaml) {

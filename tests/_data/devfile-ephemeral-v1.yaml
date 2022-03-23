@@ -1,0 +1,11 @@
+apiVersion: 1.0.0
+metadata:
+  name: apache-camel-k-345
+attributes:
+  persistVolumes: "false"
+projects:
+  -
+    name: camel-k-examples
+    source:
+      type: git
+      location: "https://github.com/che-samples/apache-camel-k"
