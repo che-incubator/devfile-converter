@@ -666,4 +666,15 @@ describe('Test Devfile converter', () => {
     const storageAttribute = convertedDevfileV2?.attributes?.['controller.devfile.io/storage-type'];
     expect(storageAttribute).toBe('ephemeral');
   });
+
+  test('convert v1 -> v2 devfile-docs-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-docs-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    // the endpoint name is invalid and then it should have been fixed on the conversion
+    expect(validationResult.valid).toBeTruthy();
+  });
 });

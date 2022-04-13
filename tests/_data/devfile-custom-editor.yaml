@@ -10,4 +10,4 @@ projects:
       branch: myBranch
 components:
   - type: cheEditor
-    reference: 'https://reference'
+    id: 'https://id'

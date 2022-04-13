@@ -51,8 +51,6 @@ components:
     type: chePlugin
     preferences:
       -foo: bar
-  - reference: http://my-plugin.reference
-    type: chePlugin
 apiVersion: 1.0.0
 commands:
   - name: Attach to Remote Quarkus App

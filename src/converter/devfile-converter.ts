@@ -68,7 +68,17 @@ export class DevfileConverter {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const endpoint: any = {};
         if (endpointV1.name) {
-          endpoint.name = endpointV1.name;
+          // the name can't have spaces
+          // replace space by dash and then remove all special characters
+          const endpointName = endpointV1.name
+            .replace(/\s+/g, '-')
+            // names should not use _
+            .replace(/_/g, '-')
+            // trim '-' character from start or end
+            .replace(/^\-+|\-+$/g, '')
+            .toLowerCase();
+
+          endpoint.name = endpointName;
         }
         if (endpointV1.port) {
           endpoint.targetPort = endpointV1.port;
@@ -354,6 +364,10 @@ export class DevfileConverter {
     // replace space by dash and then remove all special characters
     const projectName = projectV1.name
       .replace(/\s+/g, '-')
+      // names should not use _
+      .replace(/_/g, '-')
+      // names should not use .
+      .replace(/\./g, '-')
       // trim '-' character from start or end
       .replace(/^\-+|\-+$/g, '')
       .toLowerCase();
@@ -514,48 +528,46 @@ export class DevfileConverter {
       return undefined;
     }
 
-    const cheTheiaPluginsContent = chePluginComponents.map(chePluginComponent => {
-      const cheTheiaPlugin: any = {};
-      if (chePluginComponent.id) {
-        cheTheiaPlugin.id = chePluginComponent.id;
-      }
-      if (chePluginComponent.reference) {
-        cheTheiaPlugin.reference = chePluginComponent.reference;
-      }
+    const cheTheiaPluginsContent = chePluginComponents
+      .filter(component => component.id)
+      .map(chePluginComponent => {
+        const cheTheiaPlugin: any = {};
+        if (chePluginComponent.id) {
+          cheTheiaPlugin.id = chePluginComponent.id;
+        }
+        cheTheiaPlugin.override = {
+          sidecar: {},
+        };
+        if (chePluginComponent.registryUrl) {
+          cheTheiaPlugin.registryUrl = chePluginComponent.registryUrl;
+        }
 
-      cheTheiaPlugin.override = {
-        sidecar: {},
-      };
-      if (chePluginComponent.registryUrl) {
-        cheTheiaPlugin.registryUrl = chePluginComponent.registryUrl;
-      }
+        if (chePluginComponent.alias) {
+          cheTheiaPlugin.override.sidecar.name = chePluginComponent.alias;
+        }
 
-      if (chePluginComponent.alias) {
-        cheTheiaPlugin.override.sidecar.name = chePluginComponent.alias;
-      }
+        if (chePluginComponent.env) {
+          cheTheiaPlugin.override.sidecar.env = chePluginComponent.env;
+        }
 
-      if (chePluginComponent.env) {
-        cheTheiaPlugin.override.sidecar.env = chePluginComponent.env;
-      }
+        if (chePluginComponent.preferences) {
+          cheTheiaPlugin.override.preferences = chePluginComponent.preferences;
+        }
 
-      if (chePluginComponent.preferences) {
-        cheTheiaPlugin.override.preferences = chePluginComponent.preferences;
-      }
-
-      if (chePluginComponent.memoryLimit) {
-        cheTheiaPlugin.override.sidecar.memoryLimit = chePluginComponent.memoryLimit;
-      }
-      if (chePluginComponent.memoryRequest) {
-        cheTheiaPlugin.override.sidecar.memoryRequest = chePluginComponent.memoryRequest;
-      }
-      if (chePluginComponent.cpuLimit) {
-        cheTheiaPlugin.override.sidecar.cpuLimit = chePluginComponent.cpuLimit;
-      }
-      if (chePluginComponent.cpuRequest) {
-        cheTheiaPlugin.override.sidecar.cpuRequest = chePluginComponent.cpuRequest;
-      }
-      return cheTheiaPlugin;
-    });
+        if (chePluginComponent.memoryLimit) {
+          cheTheiaPlugin.override.sidecar.memoryLimit = chePluginComponent.memoryLimit;
+        }
+        if (chePluginComponent.memoryRequest) {
+          cheTheiaPlugin.override.sidecar.memoryRequest = chePluginComponent.memoryRequest;
+        }
+        if (chePluginComponent.cpuLimit) {
+          cheTheiaPlugin.override.sidecar.cpuLimit = chePluginComponent.cpuLimit;
+        }
+        if (chePluginComponent.cpuRequest) {
+          cheTheiaPlugin.override.sidecar.cpuRequest = chePluginComponent.cpuRequest;
+        }
+        return cheTheiaPlugin;
+      });
 
     return jsYaml.dump(cheTheiaPluginsContent);
   }
@@ -577,10 +589,6 @@ export class DevfileConverter {
     if (cheEditorComponentV1.id) {
       cheEditorYaml.id = cheEditorComponentV1.id;
     }
-    if (cheEditorComponentV1.reference) {
-      cheEditorYaml.reference = cheEditorComponentV1.reference;
-    }
-
     if (cheEditorComponentV1.registryUrl) {
       cheEditorYaml.registryUrl = cheEditorComponentV1.registryUrl;
     }
@@ -883,9 +891,6 @@ export class DevfileConverter {
           if (component.id) {
             v1component.id = component.id;
           }
-          if (component.reference) {
-            v1component.reference = component.reference;
-          }
           if (component.registryUrl) {
             v1component.registryUrl = component.registryUrl;
           }
@@ -939,9 +944,6 @@ export class DevfileConverter {
         };
         if (cheEditorYaml.id) {
           v1component.id = cheEditorYaml.id;
-        }
-        if (cheEditorYaml.reference) {
-          v1component.reference = cheEditorYaml.reference;
         }
         if (cheEditorYaml.registryUrl) {
           v1component.registryUrl = cheEditorYaml.registryUrl;
