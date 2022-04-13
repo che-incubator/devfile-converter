@@ -3,6 +3,10 @@ metadata:
   name: spring-petclinic
 attributes:
   che-theia.eclipse.org/sidecar-policy: USE_DEV_CONTAINER
+  .che/che-theia-plugins.yaml: |
+    - id: ms-vscode/vscode-github-pullrequest/latest
+      override:
+        sidecar: {}  
 projects:
   - name: web-nodejs-sample
     git:
