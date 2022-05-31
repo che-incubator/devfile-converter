@@ -1,0 +1,86 @@
+apiVersion: 1.0.0
+metadata:
+  generateName: vertx-http-booster-
+projects:
+  - name: vertx-http-booster
+    source:
+      type: zip
+      location: 'https://codeready-codeready-workspaces-operator.apps.sandbox-m2.ll9k.p1.openshiftapps.com/devfile-registry/resources/vertx-http-booster-vertx-http-booster-master.zip'
+components:
+  - id: redhat/java11/latest
+    type: chePlugin
+    preferences:
+      java.server.launchMode: Standard
+  - id: redhat/dependency-analytics/latest
+    type: chePlugin
+  - mountSources: true
+    endpoints:
+      - name: 8080-tcp
+        port: 8080
+    type: dockerimage
+    memoryLimit: 512Mi
+    volumes:
+      - name: m2
+        containerPath: /home/jboss/.m2
+    alias: maven
+    image: registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:79b59596870382e968850bc241ac41a3345a9079f28251808e35479f92bd3b86
+    env:
+      - value: -XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+          -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+          -Dsun.zip.disableMemoryMapping=true -Xms20m -Djava.security.egd=file:/dev/./urandom
+          -Duser.home=/home/jboss
+        name: JAVA_OPTS
+      - value: $(JAVA_OPTS)
+        name: MAVEN_OPTS
+commands:
+  - name: 1. Build
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: mvn -DskipTests clean install
+        component: maven
+  - name: 2. Run
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: mvn -Dvertx.disableDnsResolver=true vertx:run
+        component: maven
+  - name: 3. Run in debug mode
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: mvn -DskipTests vertx:debug
+        component: maven
+  - name: 4. Run tests
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: mvn -DskipTests verify
+        component: maven
+  - name: 5. Log into deployment cluster
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: 'echo
+
+          echo "Before you can deploy this application to an openshift cluster,"
+
+          echo "you must run ''oc login ...'' in the maven terminal."
+
+          echo
+
+          '
+        component: maven
+  - name: 6. Deploy to OpenShift
+    actions:
+      - workdir: ${CHE_PROJECTS_ROOT}/vertx-http-booster
+        type: exec
+        command: mvn fabric8:deploy -Popenshift -DskipTests -Dvertx.disableDnsResolver=true
+        component: maven
+  - name: Debug remote java application
+    actions:
+      - referenceContent: "{\n \"version\": \"0.2.0\",\n \"configurations\": [\n \
+          \  {\n     \"type\": \"java\",\n     \"name\": \"Debug (Attach) - Remote\"\
+          ,\n     \"request\": \"attach\",\n     \"hostName\": \"localhost\",\n  \
+          \   \"port\": 5005\n   }]\n }\n"
+        type: vscode-launch
