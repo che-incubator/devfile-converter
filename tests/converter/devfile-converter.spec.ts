@@ -677,4 +677,24 @@ describe('Test Devfile converter', () => {
     // the endpoint name is invalid and then it should have been fixed on the conversion
     expect(validationResult.valid).toBeTruthy();
   });
+
+  // check that zip location is updated as part of the multi-host --> single-host conversion
+  test('convert v1 -> v2 devfile-vertx-zip-v1.yaml', async () => {
+    const devfileYamlPath = path.resolve(__dirname, '..', '_data', 'devfile-vertx-zip-v1.yaml');
+    const devfileContent = await fs.readFile(devfileYamlPath, 'utf-8');
+    const devfileV1 = jsYaml.load(devfileContent);
+    const convertedDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+    var v = new Validator();
+    const validationResult = v.validate(convertedDevfileV2, schemaV2_2_0);
+    // the project name is invalid and then it should have been fixed on the conversion
+    expect(validationResult.valid).toBeTruthy();
+
+    // grab locations
+    const locations = convertedDevfileV2?.projects?.map(project => project.zip.location);
+    expect(locations.length).toBe(1);
+    const location = locations[0];
+    expect(location).toBe(
+      'http://devfile-registry.codeready-workspaces-operator.svc:8080/resources/vertx-http-booster-vertx-http-booster-master.zip'
+    );
+  });
 });

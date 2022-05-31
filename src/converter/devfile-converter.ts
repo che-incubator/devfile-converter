@@ -687,12 +687,35 @@ export class DevfileConverter {
     await this.fixInvalidVolumeName(devfileV2);
     await this.processVolumesFromDevfileV2(devfileV2);
 
+    // fix zip project location (multi-host --> single-host)
+    await this.fixProjectsZipLocations(devfileV2);
+
     let content = JSON.stringify(devfileV2);
 
     // update devfile v1 constants
     content = content.replace(/\$\(CHE_PROJECTS_ROOT\)/g, '$(PROJECTS_ROOT)');
     content = content.replace(/\$\{CHE_PROJECTS_ROOT\}/g, '${PROJECTS_ROOT}');
     return JSON.parse(content);
+  }
+
+  // if some endpoints have excactly the same value, remove duplicates
+  async fixProjectsZipLocations(devfileV2: Devfile): Promise<void> {
+    // get projects
+    devfileV2.projects.forEach(project => {
+      if (project.zip && project.zip.location) {
+        const location = project.zip.location;
+        // if matching a pattern, then update the location
+        const regex =
+          /https:\/\/(?<name>.*?)-(?<namespace>.*?)\.(?<subdomain>.*)\/devfile-registry\/resources\/(?<resourcelink>.*)/gm;
+        let m: RegExpExecArray = regex.exec(location);
+        if (m !== null) {
+          const namespace = m.groups.namespace;
+          const resourcelink = m.groups.resourcelink;
+          const newLocation = `http://devfile-registry.${namespace}.svc:8080/resources/${resourcelink}`;
+          project.zip.location = newLocation;
+        }
+      }
+    });
   }
 
   // if some endpoints have excactly the same value, remove duplicates
