@@ -691,10 +691,14 @@ describe('Test Devfile converter', () => {
 
     // grab locations
     const locations = convertedDevfileV2?.projects?.map(project => project.zip.location);
-    expect(locations.length).toBe(1);
-    const location = locations[0];
-    expect(location).toBe(
+    expect(locations.length).toBe(2);
+    const location1 = locations[0];
+    expect(location1).toBe(
       'http://devfile-registry.codeready-workspaces-operator.svc:8080/resources/vertx-http-booster-vertx-http-booster-master.zip'
+    );
+    const location2 = locations[1];
+    expect(location2).toBe(
+      'http://devfile-registry.openshift-workspaces.svc:8080/resources/vertx-health-checks-vertx-health-checks-example-redhat-master.zip'
     );
   });
 });

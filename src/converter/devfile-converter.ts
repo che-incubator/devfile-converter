@@ -706,7 +706,7 @@ export class DevfileConverter {
         const location = project.zip.location;
         // if matching a pattern, then update the location
         const regex =
-          /https:\/\/(?<name>.*?)-(?<namespace>.*?)\.(?<subdomain>.*)\/devfile-registry\/resources\/(?<resourcelink>.*)/gm;
+          /https:\/\/(devfile-registry|codeready|eclipse-che)-(?<namespace>.*?)\.(?<subdomain>.*)[\/.*]*\/resources\/(?<resourcelink>.*)/gm;
         let m: RegExpExecArray = regex.exec(location);
         if (m !== null) {
           const namespace = m.groups.namespace;
