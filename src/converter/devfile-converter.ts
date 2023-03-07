@@ -382,7 +382,7 @@ export class DevfileConverter {
 
     if (projectV1.source) {
       const source = projectV1.source;
-      if (source.type === 'git' || source.type === 'github') {
+      if (source.type === 'git' || source.type === 'github' || source.type === 'bitbucket') {
         const remotes = { origin: source.location };
         devfileV2Project.git = {
           remotes,
