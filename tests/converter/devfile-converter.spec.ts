@@ -52,6 +52,156 @@ describe('Test Devfile converter', () => {
     devfileConverter = container.get(DevfileConverter);
   });
 
+  describe('GitHub', () => {
+    test('convert v1 to v2', async () => {
+      const devfileV1: che.workspace.devfile.Devfile = {
+        apiVersion: '1.0.0',
+        metadata: {
+          generateName: 'hello',
+        },
+        projects: [
+          {
+            name: 'my-project',
+            source: {
+              type: 'github',
+              location: 'https://github.com/this-is-a-test',
+              branch: 'myBranch',
+            },
+          },
+        ],
+      };
+      const convertedToDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+
+      expect(convertedToDevfileV2).toEqual({
+        schemaVersion: '2.1.0',
+        attributes: {},
+        commands: [],
+        components: [],
+        metadata: {
+          attributes: {
+            'metadata-name-field': 'generateName',
+            'metadata-name-original-value': 'hello',
+          },
+          name: 'hello',
+        },
+        projects: [
+          {
+            name: 'my-project',
+            attributes: {
+              'source-origin': 'branch',
+            },
+            git: {
+              remotes: {
+                origin: 'https://github.com/this-is-a-test',
+              },
+              checkoutFrom: {
+                revision: 'myBranch',
+              },
+            },
+          },
+        ],
+      });
+    });
+  });
+
+  describe('Bitbucket', () => {
+    test('convert v1 to v2', async () => {
+      const devfileV1: che.workspace.devfile.Devfile = {
+        apiVersion: '1.0.0',
+        metadata: {
+          generateName: 'public-repo-testname',
+        },
+        projects: [
+          {
+            name: 'public-bb-repo',
+            source: {
+              type: 'bitbucket',
+              location: 'https://bitbucket.org/test/this-is-a-test',
+            },
+          },
+        ],
+      };
+      const convertedToDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+
+      expect(convertedToDevfileV2).toEqual({
+        schemaVersion: '2.1.0',
+        attributes: {},
+        commands: [],
+        components: [],
+        metadata: {
+          attributes: {
+            'metadata-name-field': 'generateName',
+            'metadata-name-original-value': 'public-repo-testname',
+          },
+          name: 'public-repo-testname',
+        },
+        projects: [
+          {
+            name: 'public-bb-repo',
+            attributes: {},
+            git: {
+              remotes: {
+                origin: 'https://bitbucket.org/test/this-is-a-test',
+              },
+            },
+          },
+        ],
+      });
+    });
+  });
+
+  describe('GitLab', () => {
+    test('convert v1 to v2', async () => {
+      const devfileV1: che.workspace.devfile.Devfile = {
+        apiVersion: '1.0.0',
+        metadata: {
+          generateName: 'public-repo-testname',
+        },
+        projects: [
+          {
+            name: 'public-bb-repo',
+            source: {
+              type: 'git',
+              location: 'https://gitlab.com/test/this-is-a-test',
+              branch: 'myBranch',
+            },
+          },
+        ],
+      };
+      const convertedToDevfileV2 = await devfileConverter.devfileV1toDevfileV2(devfileV1);
+
+      expect(convertedToDevfileV2).toEqual({
+        schemaVersion: '2.1.0',
+        attributes: {},
+        commands: [],
+        components: [],
+        metadata: {
+          attributes: {
+            'metadata-name-field': 'generateName',
+            'metadata-name-original-value': 'public-repo-testname',
+          },
+          name: 'public-repo-testname',
+        },
+        projects: [
+          {
+            name: 'public-bb-repo',
+            attributes: {
+              'source-origin': 'branch',
+            },
+            git: {
+              remotes: {
+                origin: 'https://gitlab.com/test/this-is-a-test',
+              },
+              checkoutFrom: {
+                revision: 'myBranch',
+              },
+            },
+          },
+        ],
+      });
+    });
+  });
+
   test('convert v1/v2', async () => {
     // convert devfile1 to devfile2 to devfile1 and see if it's the same object
     const devfileV1: che.workspace.devfile.Devfile = {
