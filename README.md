@@ -3,6 +3,8 @@
 This library allows to convert devfile v1 to devfile v2 or the opposite.
 
 
+
+
 ```typescript
 import * as devfileConverter from '@eclipse-che/devfile-converter';
 ```
