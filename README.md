@@ -15,3 +15,7 @@ async function v2ToV1(devfileV2: Devfile, externalContentAccess?: (filename: str
 ```typescript
 async function v1ToV2(devfileV1: che.workspace.devfile.Devfile): Promise<Devfile>
 ```
+
+# Trademark
+
+"Che" is a trademark of the Eclipse Foundation.
